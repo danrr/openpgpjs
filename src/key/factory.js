@@ -49,6 +49,7 @@ import { unarmor } from '../encoding/armor';
  * @param {Number} [options.keyExpirationTime=0]
  *                             The number of seconds after the key creation time that the key expires
  * @param  {String} options.curve            (optional) elliptic curve for ECC keys
+ * @param  {String} options.symmetric            (optional) symmetric algorithm for symmetric keys
  * @param  {Date} options.date         Override the creation date of the key and the key signatures
  * @param  {Array<Object>} options.subkeys   (optional) options for each subkey, default to main key options. e.g. [{sign: true, passphrase: '123'}]
  *                                              sign parameter defaults to false, and indicates whether the subkey should sign rather than encrypt

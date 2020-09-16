@@ -65,12 +65,6 @@ export { default as S2K } from './type/s2k';
 export { default as Keyid } from './type/keyid';
 
 /**
- * @see module:type/ecdh_symkey
- * @name module:openpgp.ECDHSymmetricKey
- */
-export { default as ECDHSymmetricKey } from './type/ecdh_symkey';
-
-/**
  * @see module:type/kdf_params
  * @name module:openpgp.KDFParams
  */
@@ -81,6 +75,16 @@ export { default as KDFParams } from './type/kdf_params';
  * @name module:openpgp.OID
  */
 export { default as OID } from './type/oid';
+/**
+ * @see module:type/enum
+ * @name module:openpgp.TypeEnum
+ */
+export { default as TypeEnum } from './type/enum';
+/**
+ * @see module:type/symmetric_key_material
+ * @name module:openpgp.SymmetricKeyMaterial
+ */
+export { default as ByteArray } from './type/byte_array';
 
 /**
  * @see streams

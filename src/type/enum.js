@@ -15,50 +15,56 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+
 /**
- * Encoded symmetric key for ECDH
+ * Wrapper for enums
  *
- * @requires util
- * @module type/ecdh_symkey
+ * @requires enums
+ * @module type/enum.js
  */
 
-import util from '../util';
 
-class ECDHSymmetricKey {
+import enums from "../enums";
+
+const type_enum = e => class EnumType {
   constructor(data) {
     if (typeof data === 'undefined') {
-      data = new Uint8Array([]);
-    } else if (util.isString(data)) {
-      data = util.strToUint8Array(data);
+      this.data = null;
     } else {
-      data = new Uint8Array(data);
+      this.data = enums.write(e, data);
     }
-    this.data = data;
   }
 
   /**
-   * Read an ECDHSymmetricKey from an Uint8Array
-   * @param  {Uint8Array}  input  Where to read the encoded symmetric key from
-   * @returns {Number}             Number of read bytes
+   * Read an enum entry
+   * @param  {Uint8Array}  input  Where to read the symmetric algo from
    */
   read(input) {
-    if (input.length >= 1) {
-      const length = input[0];
-      if (input.length >= 1 + length) {
-        this.data = input.subarray(1, 1 + length);
-        return 1 + this.data.length;
-      }
-    }
-    throw new Error('Invalid symmetric key');
+    const data = input[0];
+    this.data = enums.write(e, data);
+    return 1;
   }
 
   /**
-   * Write an ECDHSymmetricKey as an Uint8Array
-   * @returns  {Uint8Array}  An array containing the value
+   * Write an enum as an integer
+   * @returns  {Uint8Array}  An integer representing the algorithm
    */
   write() {
-    return util.concatUint8Array([new Uint8Array([this.data.length]), this.data]);
+    return new Uint8Array([this.data]);
   }
-}
 
-export default ECDHSymmetricKey;
+  /**
+   * Get the name of the enum entry
+   * @returns  {string}  The name string
+   */
+  getName() {
+    return enums.read(e, this.data);
+  }
+};
+const AEADEnum = type_enum(enums.aead);
+const SymAlgoEnum = type_enum(enums.symmetric);
+
+
+export { SymAlgoEnum, AEADEnum };
+
+export default type_enum;
