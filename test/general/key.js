@@ -3450,12 +3450,13 @@ VYGdb3eNlV8CfoEC
       expect(subKey).to.exist;
       expect(newPrivateKey.subKeys.length).to.be.equal(total + 1);
       expect(subKey.getAlgorithmInfo().symmetric).to.be.equal('aes256');
-      expect(subKey.keyPacket.publicParams.digest).to.exist.and.to.have.length(32);
+      expect(subKey.keyPacket.publicParams.mac).to.exist.and.to.have.length(16);
       expect(subKey.keyPacket.privateParams.keyMaterial).to.exist.and.to.have.length(32);
       await subKey.verify(privateKey.primaryKey);
     });
 
     it('create and add a new rsa key with a symmetric encryption subkey', async function() {
+      openpgp.config.tolerant = false;
       const userId = 'test <a@b.com>';
       const opt = { rsaBits: 512, userIds: [userId], subkeys:[{ symmetric: 'aes256' }] };
       if (openpgp.util.getWebCryptoAll()) { opt.rsaBits = 2048; } // webkit webcrypto accepts minimum 2048 bit keys
@@ -3469,7 +3470,7 @@ VYGdb3eNlV8CfoEC
       expect(subKey.getAlgorithmInfo().symmetric).to.be.equal('aes256');
       expect(subKey.keyPacket.publicParams.cipher).to.exist;
       expect(subKey.keyPacket.publicParams.cipher.getName()).to.be.equal('aes256');
-      expect(subKey.keyPacket.publicParams.digest).to.exist.and.to.have.length(32);
+      expect(subKey.keyPacket.publicParams.mac).to.exist.and.to.have.length(16);
       expect(subKey.keyPacket.privateParams.keyMaterial).to.exist.and.to.have.length(32);
       await subKey.verify(newKey.primaryKey);
     });
@@ -3486,7 +3487,7 @@ VYGdb3eNlV8CfoEC
       expect(subKey.getAlgorithmInfo().symmetric).to.be.equal('aes256');
       expect(subKey.keyPacket.publicParams.cipher).to.exist;
       expect(subKey.keyPacket.publicParams.cipher.getName()).to.be.equal('aes256');
-      expect(subKey.keyPacket.publicParams.digest).to.exist.and.to.have.length(32);
+      expect(subKey.keyPacket.publicParams.mac).to.exist.and.to.have.length(16);
       expect(subKey.keyPacket.privateParams.keyMaterial).to.exist.and.to.have.length(32);
       await subKey.verify(key.primaryKey);
     });

@@ -61,7 +61,7 @@ function pad(data, padding, padding2) {
 
 const zeroBlock = new Uint8Array(blockLength);
 
-export default async function CMAC(key) {
+async function CMAC(key) {
   const cbc = await CBC(key);
 
   // L ← E_K(0^n); B ← 2L; P ← 4L
@@ -96,3 +96,6 @@ async function CBC(key) {
     return AES_CBC.encrypt(pt, key, false, zeroBlock);
   };
 }
+
+CMAC.blockLength = blockLength;
+export default CMAC;

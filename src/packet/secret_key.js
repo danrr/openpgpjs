@@ -396,7 +396,7 @@ class SecretKeyPacket extends PublicKeyPacket {
     let validParams;
     try {
       // this can throw if some parameters are undefined
-      validParams = await crypto.validateParams(algo, this.publicParams, this.privateParams);
+      validParams = await crypto.validateParams(algo, this.publicParams, this.privateParams, this.tag, this.version);
     } catch (_) {
       validParams = false;
     }
@@ -408,7 +408,7 @@ class SecretKeyPacket extends PublicKeyPacket {
 
   async generate(bits, curve, symmetric) {
     const algo = enums.write(enums.publicKey, this.algorithm);
-    const { privateParams, publicParams } = await crypto.generateParams(algo, bits, curve, symmetric);
+    const { privateParams, publicParams } = await crypto.generateParams(algo, bits, curve, symmetric, this.tag, this.version);
     this.privateParams = privateParams;
     this.publicParams = publicParams;
     this.isEncrypted = false;

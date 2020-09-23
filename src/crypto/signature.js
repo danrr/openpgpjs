@@ -56,7 +56,8 @@ export function parseSignatureParams(algo, signature) {
     }
 
     case enums.publicKey.cmac: {
-      const mac = new ByteArray(); mac.read(signature.subarray(read));
+      const cmacLength = CMAC.blockLength;
+      const mac = signature.subarray(read, read + cmacLength);
       return { mac };
     }
     default:

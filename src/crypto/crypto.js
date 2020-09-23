@@ -37,7 +37,6 @@
 import publicKey from './public_key';
 import * as cipher from './cipher';
 import { getRandomBytes } from './random';
-import hash from './hash';
 import config from '../config';
 import KDFParams from '../type/kdf_params';
 import ByteArray from '../type/byte_array';
@@ -46,7 +45,9 @@ import enums from '../enums';
 import util from '../util';
 import OID from '../type/oid';
 import { Curve } from './public_key/elliptic/curves';
+import CMAC from "./cmac";
 import crypto from "./";
+import cmac from "./cmac";
 
 /**
  * Encrypts data using specified algorithm and public key parameters.
@@ -195,9 +196,9 @@ export function parsePublicKeyParams(algo, bytes) {
     case enums.publicKey.cmac:
     case enums.publicKey.aead: {
       const algo = new SymAlgoEnum(); read += algo.read(bytes);
-      const digestLength = hash.getHashByteLength(enums.hash.sha256);
-      const digest = bytes.subarray(read, read + digestLength); read += digestLength;
-      return { read: read, publicParams: { cipher: algo, digest } };
+      const cmacLength = CMAC.blockLength;
+      const mac = bytes.subarray(read, read + cmacLength); read += cmacLength;
+      return { read: read, publicParams: { cipher: algo, mac } };
     }
     default:
       throw new Error('Invalid public key encryption algorithm.');
@@ -338,10 +339,12 @@ export function serializeParams(algo, params) {
  * @param {Integer}                 bits                          Bit length for RSA keys
  * @param {module:type/oid}         oid                           Object identifier for ECC keys
  * @param {module:enums.symmetric}  symmetric                     Symmetric algorithm
+ * @param {module:enums.packet}     tag                           (only for symmetric algorithms) tag of packet where key material will be stored
+ * @param {Integer}                 version                       (only for symmetric algorithms) version of packet where key material will be stored
  * @returns {{ publicParams: {Object}, privateParams: {Object} }} The parameters referenced by name
  * @async
  */
-export async function generateParams(algo, bits, oid, symmetric) {
+export async function generateParams(algo, bits, oid, symmetric, tag, version) {
   switch (algo) {
     case enums.publicKey.rsaEncrypt:
     case enums.publicKey.rsaEncryptSign:
@@ -373,12 +376,15 @@ export async function generateParams(algo, bits, oid, symmetric) {
     case enums.publicKey.cmac:
     case enums.publicKey.aead: {
       const keyMaterial = await generateSessionKey(symmetric);
-      const digest = await hash.sha256(keyMaterial);
+      const algo = new SymAlgoEnum(symmetric);
+      const cmac = await CMAC(keyMaterial);
+      const mac = await cmac(new Uint8Array([tag, version, algo.write()]));
+
       return {
         privateParams: { keyMaterial },
         publicParams: {
-          cipher: new SymAlgoEnum(symmetric),
-          digest
+          cipher: algo,
+          mac
         }
       };
     }
@@ -395,10 +401,12 @@ export async function generateParams(algo, bits, oid, symmetric) {
  * @param {module:enums.publicKey}  algo          The public key algorithm
  * @param {Object}                  publicParams  Algorithm-specific public key parameters
  * @param {Object}                  privateParams Algorithm-specific private key parameters
+ * @param {module:enums.packet}     tag           (only for symmetric algorithms) tag of packet where key material will be stored
+ * @param {Integer}                 version       (only for symmetric algorithms) version of packet where key material will be stored
  * @returns {Promise<Boolean>}                    Whether the parameters are valid
  * @async
  */
-export async function validateParams(algo, publicParams, privateParams) {
+export async function validateParams(algo, publicParams, privateParams, tag, version) {
   if (!publicParams || !privateParams) {
     throw new Error('Missing key parameters');
   }
@@ -434,12 +442,13 @@ export async function validateParams(algo, publicParams, privateParams) {
     }
     case enums.publicKey.cmac:
     case enums.publicKey.aead: {
-      const { cipher: algo, digest } = publicParams;
+      const { cipher: algo, mac } = publicParams;
       const algoName = algo.getName();
       const { keyMaterial } = privateParams;
       const keySize = cipher[algoName].keySize;
+      const cmac = await CMAC(keyMaterial);
       return keySize === keyMaterial.length &&
-        util.equalsUint8Array(digest, await hash.sha256(keyMaterial));
+        util.equalsUint8Array(mac, await cmac(new Uint8Array([tag, version, algo.write()])));
     }
     default:
       throw new Error('Invalid public key algorithm.');
